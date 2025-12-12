@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 const prodiList = ref([]);
+const loading = ref(false);
 const form = ref({ nim:'', nama:'', program_studi_id:'', email:'', nomor_hp:'', jenis_kelamin:'1', tempat_lahir:'', tanggal_lahir:'' });
 
 onMounted(async () => {
@@ -13,42 +14,49 @@ onMounted(async () => {
 });
 
 const submit = async () => {
+  loading.value = true;
   const token = localStorage.getItem('token');
-  const res = await fetch('https://hafid.copium.id/api/mahasiswa', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify(form.value)
-  });
-  if(res.ok) router.push('/dashboard');
+  try {
+    const res = await fetch('https://hafid.copium.id/api/mahasiswa', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(form.value)
+    });
+    if(res.ok) router.push('/dashboard');
+  } finally { loading.value = false; }
 };
 </script>
 
 <template>
-  <div class="container">
-    <div class="glass-panel">
-      <h2>Tambah Mahasiswa</h2>
-      <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+  <div class="dark-container">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>New Student</h2>
+        <p>Tambahkan data mahasiswa baru.</p>
+      </div>
       <form @submit.prevent="submit" class="grid-form">
         <div class="col">
-          <label>NIM</label><input v-model="form.nim" class="input" required>
-          <label>Nama</label><input v-model="form.nama" class="input" required>
-          <label>Prodi</label>
-          <select v-model="form.program_studi_id" class="input" required>
-            <option v-for="p in prodiList" :value="p.id">{{ p.program_studi }}</option>
-          </select>
-          <label>Gender</label>
-          <select v-model="form.jenis_kelamin" class="input">
-            <option value="1">Laki-laki</option><option value="0">Perempuan</option>
-          </select>
+          <div class="input-wrap"><label>NIM</label><input v-model="form.nim" class="dark-input" required></div>
+          <div class="input-wrap"><label>Nama</label><input v-model="form.nama" class="dark-input" required></div>
+          <div class="input-wrap"><label>Prodi</label>
+            <select v-model="form.program_studi_id" class="dark-input" required>
+              <option value="" disabled>Pilih Prodi</option>
+              <option v-for="p in prodiList" :value="p.id">{{ p.program_studi }}</option>
+            </select>
+          </div>
         </div>
+
         <div class="col">
-          <label>Email</label><input v-model="form.email" class="input" type="email" required>
-          <label>HP</label><input v-model="form.nomor_hp" class="input" required>
-          <label>Tempat Lahir</label><input v-model="form.tempat_lahir" class="input" required>
-          <label>Tgl Lahir</label><input v-model="form.tanggal_lahir" type="date" class="input" required>
+          <div class="input-wrap"><label>Email</label><input v-model="form.email" type="email" class="dark-input" required></div>
+          <div class="input-wrap"><label>HP</label><input v-model="form.nomor_hp" class="dark-input" required></div>
+          <div class="row-inputs">
+             <div class="input-wrap"><label>Tgl Lahir</label><input v-model="form.tanggal_lahir" type="date" class="dark-input" required></div>
+             <div class="input-wrap"><label>Tempat</label><input v-model="form.tempat_lahir" class="dark-input" required></div>
+          </div>
         </div>
-        <div class="full-width">
-          <button type="submit" class="btn-save">Simpan Data</button>
-          <button type="button" @click="router.back()" class="btn-cancel">Batal</button>
+
+        <div class="action-row">
+          <button type="button" @click="router.back()" class="btn-cancel">Cancel</button>
+          <button type="submit" class="btn-save" :disabled="loading">{{ loading ? 'Saving...' : 'Save Data' }}</button>
         </div>
       </form>
     </div>
@@ -56,14 +64,27 @@ const submit = async () => {
 </template>
 
 <style scoped>
-/* Gunakan style container & glass-panel yang sama dengan dashboard index */
-.container { min-height: 100vh; padding: 40px; background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); background-size: 400% 400%; animation: gradientBG 15s infinite; display: flex; justify-content: center; }
-.glass-panel { background: rgba(255,255,255,0.95); padding: 40px; border-radius: 20px; width: 100%; max-width: 800px; height: fit-content; }
-.grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-.col { display: flex; flex-direction: column; gap: 10px; }
-.input { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
-.full-width { grid-column: span 2; display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-.btn-save { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; }
-.btn-cancel { padding: 10px 20px; background: #ccc; border: none; border-radius: 8px; cursor: pointer; }
-@keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+.dark-container { min-height: 100vh; background: #020617; display: flex; justify-content: center; align-items: center; padding: 40px; }
+.form-card { width: 100%; max-width: 900px; background: #0f172a; border: 1px solid #1e293b; border-radius: 24px; padding: 40px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+.form-header h2 { color: #f8fafc; margin: 0; font-size: 24px; font-weight: 700; }
+.form-header p { color: #64748b; margin: 5px 0 20px 0; font-size: 14px; }
+.grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.col { display: flex; flex-direction: column; gap: 20px; }
+.input-wrap label { display: block; color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.dark-input { width: 100%; background: #1e293b; border: 1px solid #334155; color: #f8fafc; padding: 12px 16px; border-radius: 10px; font-size: 14px; outline: none; transition: 0.2s; box-sizing: border-box; }
+.dark-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+.row-inputs { display: flex; gap: 15px; } .row-inputs .input-wrap { flex: 1; }
+.action-row { grid-column: span 2; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #1e293b; padding-top: 30px; margin-top: 10px; }
+.btn-save { background: #6366f1; color: white; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-weight: 700; }
+.btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .dark-container { padding: 20px 10px; align-items: flex-start; }
+  .form-card { padding: 25px; }
+  .grid-form { grid-template-columns: 1fr; gap: 20px; }
+  .row-inputs { flex-direction: column; gap: 20px; }
+  .action-row { grid-column: span 1; flex-direction: column-reverse; }
+  .btn-save, .btn-cancel { width: 100%; padding: 15px; }
+}
 </style>
